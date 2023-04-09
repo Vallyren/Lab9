@@ -3,59 +3,20 @@
 ### Обнаружение атаки arp_spoofing и отправка сообщения оператору.
 ### Цель:
 ### Необходимо доработать скрипт arp_spoof_detector.py, написанный на занятии, чтобы в случае обнаружения атаки arp_spoofing-а отправлялось письмо на почту  ответственного лица (можно на вашу).
-#!/usr/bin/env python
-import scapy.all as scapy
-
-def get_mac_addr(ip):
-    arp_req = scapy.ARP(pdst=ip)
-    broadcast = scapy.Ether(dst='ff:ff:ff:ff:ff:ff')
-    arp_req_broadcast = broadcast/arp_req
-    resp_list = scapy.srp(arp_req_broadcast, timeout=1, verbose=False)[0]
-    return resp_list[0][1].hwsrc
-
-def send_alarm(email, password, message):
-   import smtplib
-            from email.mime.multipart import MIMEMultipart
-            from email.mime.text import MIMEText
-
-            me = "re.nata2018@yandex.ru"
-            my_password = "************"
-            you = "vallyren@gmail.com"
-
-            msg = MIMEMultipart('alternative')
-            msg['Subject'] = "Alert"
-            msg['From'] = me
-            msg['To'] = you
-
-            html = '<html><body><p>Hi, I have the following alerts for you!</p></body></html>'
-            part2 = MIMEText(html, 'html')
-
-            msg.attach(part2)
-
-            s = smtplib.SMTP_SSL('smtp.yandex.ru')
-            s.login(me, my_password)
-
-            s.sendmail(me, you, msg.as_string())
-            s.quit()
-   pass
-
-def process_sniffed_packet(packet):
-   if packet.haslayer(scapy.ARP) and packet[scapy.ARP].op == 2:
-      try:
-         real_mac = get_mac_addr(packet[scapy.ARP].psrc)
-         response_mac = packet[scapy.ARP].hwsrc
-         if real_mac != response_mac:
-            print('ALARM! ARP-spoofing attack was detected!')
-         except IndexError:
-         pass
-
-def sniff(interface):
-   scapy.sniff(iface=interface, store=False, prn=process_sniffed_packet)
-
-sniff('eth0')
+![2023-04-09_15-43-09](https://user-images.githubusercontent.com/122459067/230773178-912f04d1-6eb3-4867-a9c5-af761d63be51.png)
 #### Необходимо доработать скрипт, используя библиотеку smtp для отправки сообщения при обнаружении атаки.
 #### Также необходимо протестировать скрипт в трех разных случаях:
 ##### 1. машина не находится под атакой arp-spoofing
+![не под атакой кали](https://user-images.githubusercontent.com/122459067/230773195-aef187e0-4218-4337-8137-7f97c88966ab.png)
+![не под атакой клон](https://user-images.githubusercontent.com/122459067/230773202-d5da961a-5c42-4eac-8ab1-60b8bafb7b34.png)
+
 ##### 2. машинка находится под атакой и скрипт обнаружения был запущен до начала атаки
+![под атакой детект запущен до атаки кали1](https://user-images.githubusercontent.com/122459067/230773213-38365da1-dc8e-44da-a9fc-891bac0b86e4.png)
+![под атакой детект запущен до атаки клон](https://user-images.githubusercontent.com/122459067/230773219-844e0069-25a0-4ee1-be11-135413a264b4.png)
+
 ##### 3. машинка находится под атакой и скрипт обнаружения был запущен после начала атаки
+![2023-04-09_15-23-35](https://user-images.githubusercontent.com/122459067/230773244-80947354-a2f0-46a8-8de0-64f9dce4a7a3.png)
+![2023-04-09_15-23-05](https://user-images.githubusercontent.com/122459067/230773255-02d42731-4ee9-4376-80c3-32794223b13f.png)
+![2023-04-09_15-29-51](https://user-images.githubusercontent.com/122459067/230773259-ca046e7d-c1fb-4150-af1b-8d695829da1b.png)
+
 ##### Для проверки необходимо предоставить доработанный код, а также скриншоты, где видны арп-таблицы и консольный вывод скриптов.

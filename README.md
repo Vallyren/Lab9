@@ -3,21 +3,17 @@
 ### Обнаружение атаки arp_spoofing и отправка сообщения оператору.
 ### Цель:
 ### Необходимо доработать скрипт arp_spoof_detector.py, написанный на занятии, чтобы в случае обнаружения атаки arp_spoofing-а отправлялось письмо на почту  ответственного лица (можно на вашу).
-
-!/usr/bin/env python
+#!/usr/bin/env python
 import scapy.all as scapy
 
 def get_mac_addr(ip):
-    ''' Get mac address by ip '''
     arp_req = scapy.ARP(pdst=ip)
     broadcast = scapy.Ether(dst='ff:ff:ff:ff:ff:ff')
     arp_req_broadcast = broadcast/arp_req
     resp_list = scapy.srp(arp_req_broadcast, timeout=1, verbose=False)[0]
-
     return resp_list[0][1].hwsrc
 
 def send_alarm(email, password, message):
-   #todo
    import smtplib
             from email.mime.multipart import MIMEMultipart
             from email.mime.text import MIMEText
@@ -36,11 +32,7 @@ def send_alarm(email, password, message):
 
             msg.attach(part2)
 
-   # Send the message via gmail's regular server, over SSL - passwords are being sent, afterall
             s = smtplib.SMTP_SSL('smtp.yandex.ru')
-   # uncomment if interested in the actual smtp conversation
-   # s.set_debuglevel(1)
-   # do the smtp auth; sends ehlo if it hasn't been sent already
             s.login(me, my_password)
 
             s.sendmail(me, you, msg.as_string())
@@ -56,8 +48,6 @@ def process_sniffed_packet(packet):
             print('ALARM! ARP-spoofing attack was detected!')
          except IndexError:
          pass
-
-
 
 def sniff(interface):
    scapy.sniff(iface=interface, store=False, prn=process_sniffed_packet)

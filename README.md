@@ -3,7 +3,37 @@
 ### Обнаружение атаки arp_spoofing и отправка сообщения оператору.
 ### Цель:
 ### Необходимо доработать скрипт arp_spoof_detector.py, написанный на занятии, чтобы в случае обнаружения атаки arp_spoofing-а отправлялось письмо на почту  ответственного лица (можно на вашу).
-![2023-04-09_15-43-09](https://user-images.githubusercontent.com/122459067/230773178-912f04d1-6eb3-4867-a9c5-af761d63be51.png)
+!/usr/bin/env python
+import scapy.all as scapy
+import requests
+import time
+
+def get_mac_addr(ip):
+    ''' Get mac address by ip '''
+    arp_req = scapy.ARP(pdst=ip)
+    broadcast = scapy.Ether(dst='ff:ff:ff:ff:ff:ff')
+    arp_req_broadcast = broadcast/arp_req
+    resp_list = scapy.srp(arp_req_broadcast, timeout=2, verbose=False)[0]
+    
+    return resp_list[0][1].hwsrc
+
+def process_sniffed_packet(packet):
+    if packet.haslayer(scapy.ARP) and packet[scapy.ARP].op == 2:
+        try:
+            real_mac = get_mac_addr(packet[scapy.ARP].psrc)
+            response_mac = packet[scapy.ARP].hwsrc
+            if real_mac != response_mac:
+               print('ALARM! ARP-spoofing attack was detected!')
+               print(requests.get("https://api.telegram.org/bot" + "5927179591:AAFmSCzAWMdGoH8A3Gym85vKShnNpGAIRfY" + "/sendMessage" + "?chat_id=" + "1362069585" + "&text=" + "Нас атакуют!!!!!!").json()) 
+        except IndexError:
+           pass
+
+def sniff(interface):
+    
+    scapy.sniff(iface=interface, store=False, prn=process_sniffed_packet)
+
+    
+sniff('eth0')
 #### Необходимо доработать скрипт, используя библиотеку smtp для отправки сообщения при обнаружении атаки.
 #### Также необходимо протестировать скрипт в трех разных случаях:
 ##### 1. машина не находится под атакой arp-spoofing
